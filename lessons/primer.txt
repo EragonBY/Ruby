@@ -1,0 +1,7 @@
+grep -A 2 "" test.txt  #вывод  до,символ,после
+
+grep -R "" test.txt    #посик файла
+
+grep -Z "" test.txt    #анзип затем открытие файла
+
+grep -G "" test.txt    #

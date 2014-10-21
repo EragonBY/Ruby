@@ -1,0 +1,101 @@
+#!/usr/bin/ruby
+
+#SDL_PATHS = ["/usr/lib/x86_64-linux-gnu/"]
+
+require 'rubygame'
+include Rubygame
+
+class Figures < Array
+  
+  def initialize
+    super
+    @empty = Surface.new [640, 480], 0, [HWSURFACE, DOUBLEBUF]
+    @empty.fill [255, 255, 255]
+  end
+  
+  def update(screen)
+    @empty.blit screen, [0, 0]
+    each { |f| f.draw screen }
+    screen.flip
+  end
+  
+end
+
+class Editor
+
+  @@figure_classes = {}
+
+  def initialize
+    @screen = Screen.new [640, 480], 0, [HWSURFACE, DOUBLEBUF]
+    @queue = EventQueue.new
+    @queue.enable_new_style_events
+    @clock = Clock.new
+    @clock.target_framerate = 30
+    @figures = Figures.new
+  end
+ 
+  def self.add_figure_class(fig_class)
+    @@figure_classes[fig_class.to_s.to_sym] = fig_class
+  end
+
+  def add_figure(f_class)
+    f = @@figure_classes[f_class].new
+    @figures << f
+    @figures.length - 1
+  end
+  
+  def self.available_figures_list
+    @@figure_classes.keys
+  end
+
+  def run
+    finished = false
+    until finished do
+      @clock.tick
+      @figures.update @screen
+      @queue.each do |event|
+        #p event
+        case event
+        when Events::QuitRequested
+          Rubygame.quit; finished = true
+        when Events::KeyPressed
+          case event.key
+          when :escape
+            Rubygame.quit; finished = true
+	  when :t
+	    
+	  end
+        end
+      end
+    end
+  end
+  
+end
+
+load 'base_figures.rb'
+load 'quadrangles.rb'
+load 'elliptic.rb'
+
+editor = Editor.new
+main_thread = Thread.new{ editor.run }
+puts 'print "help" for list of available commands'
+print '>>'
+until (input = $stdin.readline) == "exit\n"
+  case input.strip
+  when 'list'
+    Editor.available_figures_list.each { |figure_name| puts figure_name }
+  when 'help'
+    puts 'list  -  list of available figures'
+    puts 'add  -  add the figure'
+    puts 'exit  -  quit the program'
+  when 'add'
+    puts 'type figure name'
+    if Editor.available_figures_list.include? (fig = $stdin.readline.strip.to_sym)
+      editor.add_figure fig
+    else
+      puts 'no such figure'
+    end
+  end
+  print '>>'  
+end
+main_thread.kill
